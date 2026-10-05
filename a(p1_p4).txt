@@ -1,9 +1,0 @@
-Пункти 1-2 (p1_p2(1).png, p1_p2(2).png, p1_p2(3).png)
-
-Пункт 3 (p3(1).png, p3(2).png, p3(3).png)
-
-Пункт 4.1 (p4_1.png)
-
-Пункт 4.2: усі LEFT (p4_2left.png), усі RIGHT (p4_2right.png), RIGHT + LEFT (p4_2right_left.png)
-
-Пункти 4.3-4.7 (p4_7.png)
