@@ -1,0 +1,165 @@
+================================= p1 =================================
+
+CREATE SCHEMA LibraryManagement;
+
+use LibraryManagement;
+
+CREATE TABLE authors (
+    author_id INT auto_increment primary key,
+    author_name  VARCHAR(255)
+);
+
+CREATE TABLE genres (
+    genre_id  INT auto_increment PRIMARY KEY,
+    genre_name  VARCHAR(255)
+);
+
+CREATE TABLE books (
+    book_id  INT auto_increment PRIMARY KEY,
+    title  VARCHAR(255), 
+    publication_year year,
+	author_id INT,
+    genre_id INT,
+    foreign key (author_id) references authors (author_id), 
+    foreign key (genre_id) references genres (genre_id)
+);
+
+CREATE TABLE users (
+    user_id  INT auto_increment PRIMARY KEY,
+    username  VARCHAR(255),
+    email VARCHAR(255)
+);
+
+CREATE TABLE borrowed_books (
+    borrow_id  INT auto_increment PRIMARY KEY,
+    book_id INT,
+    user_id INT,
+    foreign key (book_id) references books (book_id),
+    foreign key (user_id) references users (user_id),
+    borrow_date DATE,
+    return_date DATE
+);
+
+================================= p2 =================================
+
+insert into authors (author_name) values 
+('qwe'),
+('asd');
+
+insert into genres (genre_name) values 
+('qaz'),
+('wsx');
+
+insert into books (title, publication_year, author_id, genre_id) values 
+('zxc', 2000, 1, 1),
+('rfv', 2001, 2, 2);
+
+insert into users (username, email) values 
+('usero', 'abcd@gmail.com'),
+('usert', 'efgh@gmail.com');
+
+insert into borrowed_books (book_id, user_id, borrow_date, return_date) values 
+(1, 1, '2026-10-04', '2026-11-04'),
+(2, 2, '2026-10-05', '2026-11-05');
+
+================================= p3 =================================
+
+use mydb;
+
+select * from order_details as od
+inner join orders as o on od.order_id = o.id
+inner join customers as c on o.customer_id = c.id
+inner join employees as e on o.employee_id = e.employee_id
+inner join shippers as s on o.shipper_id = s.id
+inner join products as p on od.product_id = p.id
+inner join suppliers as sp on p.supplier_id = sp.id
+inner join categories as ct on p.category_id = ct.id
+
+================================= p4 =================================
+
+use mydb;
+
+select count(*) from order_details as od
+inner join orders as o on od.order_id = o.id
+inner join customers as c on o.customer_id = c.id
+inner join employees as e on o.employee_id = e.employee_id
+inner join shippers as s on o.shipper_id = s.id
+inner join products as p on od.product_id = p.id
+inner join suppliers as sp on p.supplier_id = sp.id
+inner join categories as ct on p.category_id = ct.id
+
+//////////////////////////////////////////////////////////
+
+use mydb;
+
+select count(*) from order_details as od
+left join orders as o on od.order_id = o.id
+left join customers as c on o.customer_id = c.id
+left join employees as e on o.employee_id = e.employee_id
+left join shippers as s on o.shipper_id = s.id
+left join products as p on od.product_id = p.id
+left join suppliers as sp on p.supplier_id = sp.id
+left join categories as ct on p.category_id = ct.id
+
+в лівих таблицях накопичуються всі результати від самого початку як ми взяли 518 order_id, тому нових рядків або вирізати існуючі воно не може
+
+//////////////////////////////////////////////////////////
+
+use mydb;
+
+select count(*) from order_details as od
+right join orders as o on od.order_id = o.id
+right join customers as c on o.customer_id = c.id
+right join employees as e on o.employee_id = e.employee_id
+right join shippers as s on o.shipper_id = s.id
+right join products as p on od.product_id = p.id
+right join suppliers as sp on p.supplier_id = sp.id
+right join categories as ct on p.category_id = ct.id
+
+RIGHT JOIN зберігає всі рядки правої (щойно приєднаної) таблиці,
+а рядки вже накопиченої лівої частини, для яких не знайшлося пари, відкидає
+
+через це в ланцюжку з кількох RIGHT JOIN рядки, які додав попередній JOIN,
+відкидає наступний. RIGHT JOIN customers додає клієнтів
+без замовлень, але в цих рядках o.employee_id = NULL. наступний
+RIGHT JOIN employees не знаходить для них пари і теж відкидає їх. так само працівників без замовлень відкидає бо в них
+o.shipper_id = NULL
+
+останні таблиці ланцюжка (products, suppliers, categories) нових рядків
+не додали - кожен товар хоча б раз замовляли, а кожен постачальник
+і кожна категорія мають товари
+
+//////////////////////////////////////////////////////////
+
+use mydb;
+
+select count(*) from order_details as od
+left join orders as o on od.order_id = o.id
+right join customers as c on o.customer_id = c.id
+left join employees as e on o.employee_id = e.employee_id
+left join shippers as s on o.shipper_id = s.id
+left join products as p on od.product_id = p.id
+left join suppliers as sp on p.supplier_id = sp.id
+left join categories as ct on p.category_id = ct.id
+
+повернуло 535. як я поняв через те що RIGHT JOIN додав клієнтів без замовлень. а наступні LEFT JOIN протягнув це далі. тобто 17 тіпів нічого не замовили. 
+
+//////////////////////////////////////////////////////////
+
+use mydb;
+
+select ct.name as category_name, count(*) as row_count, avg(od.quantity) as avg_quantity 
+from order_details as od
+inner join orders as o on od.order_id = o.id
+inner join customers as c on o.customer_id = c.id
+inner join employees as e on o.employee_id = e.employee_id
+inner join shippers as s on o.shipper_id = s.id
+inner join products as p on od.product_id = p.id
+inner join suppliers as sp on p.supplier_id = sp.id
+inner join categories as ct on p.category_id = ct.id
+where e.employee_id > 3 and e.employee_id <= 10
+group by ct.name 
+having avg(od.quantity) > 21
+order by row_count desc
+limit 4 offset 1
+
